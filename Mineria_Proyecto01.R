@@ -11,10 +11,10 @@ library(openxlsx)
 ## Constantes
 # mes anho y numero de meses del reporte
 year <- 2020
-month <- 6
+month <- 4
 
 # tension nomimal
-tn <- 14376.02
+tn <- 24900
 limit087 <- 0.87*tn
 limit091 <- 0.91*tn
 limit093 <- 0.93*tn
@@ -27,7 +27,7 @@ limit113 <- 1.13*tn
 lockBinding(c("tn", "limit087", "limit091", "limit093", "limit095", "limit105", "limit107", "limit109", "limit113"), globalenv())
 
 ## Conexion a SQL Server
-channel <- odbcConnect("SQL_ION", uid="R", pwd="Con3$adm.")
+channel <- odbcConnect("SQL_ION", uid="sa", pwd="Con3$adm.")
 
 ## Carga de Tabla Source
 sources <- sqlQuery(channel , "select top 100 ID, Name, DisplayName from Source where Name like 'Coopeguanacaste.%'")
@@ -49,8 +49,8 @@ quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where 
 odbcCloseAll()
 
 ## Filtrado de Tabla Quantity
-quantity <- quantity %>% filter(grepl("^Voltage on Input V[123] Mean - Power Quality Monitoring$", Name))
-quantity$Name <- c('Van', 'Vbn', 'Vcn')
+quantity <- quantity %>% filter(grepl("^Voltage Phases [ABC][ABC] Mean$", Name))
+quantity$Name <- c('Vab', 'Vbc', 'Vca')
 
 ## Rango de fechas del reporte
 # fecha inicial en local time
@@ -64,7 +64,9 @@ final_date <- initial_date + weeks(1)
 
 while(final_date < end_final_dateCR){
   
-  channel <- odbcConnect("SQL_ION", uid="R", pwd="Con3$adm.")
+  ## Conexion a SQL Server
+  channel <- odbcConnect("SQL_ION", uid="sa", pwd="Con3$adm.")
+  
   ## Carga de Tabla DataLog2
   sources_ids <- paste0(sources$ID, collapse = ",")
   quantity_ids <- paste0(quantity$ID, collapse = ",")
@@ -75,6 +77,8 @@ while(final_date < end_final_dateCR){
                                         " and TimestampUTC < '", final_date, "'"))
   
   odbcCloseAll()
+  
+  
   ## Transformacion de columnas
   dataLog2$TimestampUTC <- as_datetime(dataLog2$TimestampUTC)
   dataLog2$TimestampCR <- with_tz(dataLog2$TimestampUTC, tzone = "America/Costa_Rica") 
@@ -124,10 +128,10 @@ while(final_date < end_final_dateCR){
   
   ## Creacion del histograma
   wb <- createWorkbook()
-  
+  meter <- sources[1,2]
   # Recorrer cada medidor
   for(meter in sources$Name){
-  
+    
     # datos del medidor
     data <- datalog_byMonth %>% filter(Meter == meter)
     data <- as.data.frame(data[,c(2:12)])
@@ -152,7 +156,7 @@ while(final_date < end_final_dateCR){
       tabla_resumen <- tabla_resumen[3:nrow(tabla_resumen),]
       t1 <- tabla_resumen[1:9,]
       t1[,4:6] <- tabla_resumen[10:18,]
-      colnames(t1) <- c("Cantidad_Van","Cantidad_Vbn","Cantidad_Vcn", "Porcent_Van","Porcent_Vbn","Porcent_Vcn")
+      colnames(t1) <- c("Cantidad_Vab","Cantidad_Vbc","Cantidad_Vca", "Porcent_Vab","Porcent_Vbc","Porcent_Vca")
       t1$Lim_Inferior <- c(0, limit087, limit091, limit093, limit095, limit105, limit107, limit109, limit113)
       t1$Lim_Superior <- c(limit087, limit091, limit093, limit095, limit105, limit107, limit109, limit113, 100000)
       t1 <- t1[,c(7, 8, 1, 4, 2 , 5, 3, 6)]
@@ -163,9 +167,9 @@ while(final_date < end_final_dateCR){
       rm(tabla_resumen)
       
       t1 <- tibble::rownames_to_column(t1, "Medicion")
-      class(t1$Porcent_Van) <- "percentage"
-      class(t1$Porcent_Vbn) <- "percentage"
-      class(t1$Porcent_Vcn) <- "percentage"
+      class(t1$Porcent_Vab) <- "percentage"
+      class(t1$Porcent_Vbc) <- "percentage"
+      class(t1$Porcent_Vca) <- "percentage"
       
       setColWidths(wb, meter, cols = c(1:10), widths = c(20, rep(15, 9) ))
       writeDataTable(wb, meter, x = t1, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1")
@@ -181,7 +185,7 @@ while(final_date < end_final_dateCR){
                                                                       "TN107_109p", 
                                                                       "TN109_113p", 
                                                                       "TN113p"))
-  
+      
       p1 <- ggplot(data_gather, aes(x = Variable, y = Value, fill = Quantity, label = Value)) +
         geom_col(position = "dodge", width = 0.7) +
         scale_y_continuous(labels = function(x) paste0(100*x, "%"), limits = c(0, 1.2)) +
@@ -197,9 +201,8 @@ while(final_date < end_final_dateCR){
     }
   }
   
-  
   ## nombre de archivo
-  fileName <- paste0("C:/Data Science/ArhivosGenerados/Coopeguanacaste/Vfase_avg (",
+  fileName <- paste0("C:/Data Science/ArhivosGenerados/Coopeguanacaste/Vlinea_avg (",
                      with_tz(initial_date, tzone = "America/Costa_Rica"),
                      ") - (",
                      with_tz(final_date, tzone = "America/Costa_Rica"),
@@ -209,5 +212,6 @@ while(final_date < end_final_dateCR){
   initial_date <- final_date
   final_date <- final_date + weeks(1)
 }
+
 
 

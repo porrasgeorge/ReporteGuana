@@ -45,11 +45,13 @@ sources <- sources %>% filter(ID %in% c(47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 
 
 
 #Carga de Tabla Quantity
-quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where Name like 'Voltage%'")
+quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where Name like 'Vphase%'")
 odbcCloseAll()
 
 ## Filtrado de Tabla Quantity
-quantity <- quantity %>% filter(grepl("^Voltage on Input V[123] Mean - Power Quality Monitoring$", Name))
+quantity <- quantity %>% filter(grepl("^Vphase [abc]$", Name))
+
+# quantity <- quantity %>% filter(grepl("^Voltage on Input V[123] Mean - Power Quality Monitoring$", Name))
 quantity$Name <- c('Van', 'Vbn', 'Vcn')
 
 ## Rango de fechas del reporte

@@ -1,4 +1,4 @@
-Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
+Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   
   ## Constantes
   # porcentaje nomimal
@@ -19,11 +19,11 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   #########################################################################################################
   
   #Carga de Tabla Quantity
-  quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where Name like 'V_unbalance%'")
+  quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where Name like 'I_unbalance%'")
   odbcCloseAll()
   
   ## Filtrado de Tabla Quantity
-  quantity$Name <- c('V_unbal')
+  quantity$Name <- c('I_unbal')
   
   ## Rango de fechas del reporte
   # fecha inicial en local time
@@ -77,12 +77,13 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   
   # Recorrer cada medidor
   for(meter in sources$Name){
-    print(paste0("Vunbalance ", meter))
+    print(paste0("Iunbalance ", meter))
     ## meter <- "Casa_Chameleon"
     
     # datos del medidor
     data <- datalog_byMonth %>% filter(Meter == meter)
     data <- as.data.frame(data[,c(2:4)])
+    
     if (nrow(data) > 0) {
       meterFileName = paste0(meter,".png");
       # Crear una hoja 
@@ -92,9 +93,9 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
       data$LT_3p <- data$LT_3/data$cantidad
       data$GE_3 <- data$cantidad - data$LT_3
       data$GE_3p <- data$GE_3/data$cantidad
-
+      
       class(data$LT_3p) <- "percentage"
-      class(data$GE_3p) <- "percentage"
+      class(data$GE_3p) <- "percentage"     
       colnames(data) <- c("Medida", "Cantidad Total", "Cantidad <3%", "Porc <3%", "Cantidad >=3%", "Porc >3%"  )
 
       setColWidths(wb, meter, cols = c(1:6), widths = c(12, rep(15, 5)))
@@ -129,7 +130,7 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   }
   
   ## nombre de archivo
-  fileName <- paste0("C:/Data Science/ArhivosGenerados/Coopeguanacaste/C_Desbalance de tension (",
+  fileName <- paste0("C:/Data Science/ArhivosGenerados/Coopeguanacaste/D_Desbalance de Corriente (",
                      with_tz(initial_date, tzone = "America/Costa_Rica"),
                      ") - (",
                      with_tz(final_date, tzone = "America/Costa_Rica"),

@@ -10,6 +10,8 @@ library(openxlsx)
 
 source(file = "Reporte_Grafico_ALL_Vphase.R")
 source(file = "Reporte_Grafico_ALL_Vline.R")
+source(file = "Reporte_Grafico_ALL_Vunbal.R")
+source(file = "Reporte_Grafico_ALL_Iunbal.R")
 
 
 #########################################################################################################
@@ -27,7 +29,8 @@ period_time <- weeks(1)
 # period_time <- months(1)
 #########################################################################################################
 
-
 Vphase_Report(source_list, initial_dateCR, period_time)
 Vline_Report(source_list, initial_dateCR, period_time)
+Vunbalance_Report(source_list, initial_dateCR, period_time)
+Iunbalance_Report(source_list, initial_dateCR, period_time)
 

@@ -170,7 +170,8 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
   
   # Recorrer cada medidor
   for (meter in sources$Name) {
-    print(paste0("Vphase ", meter, " done"))
+    ## meter <- "Casa_Chameleon"
+    print(paste0("Vphase ", meter))
     
     # datos del medidor
     data <- datalog_byMonth %>% filter(Meter == meter)
@@ -207,6 +208,18 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
           "Porcent_Vbn",
           "Porcent_Vcn"
         )
+      rownames(t1)  <-
+        c(
+          '<87%',
+          '87% <=x< 91%',
+          '91% <=x< 93%',
+          '93% <=x< 95%',
+          '95% <=x< 105%',
+          '105% <=x< 107%',
+          '107% <=x< 109%',
+          '109% <=x< 113%',
+          '>= 113%'
+        )
       t1$Lim_Inferior <-
         c(
           0,
@@ -231,6 +244,9 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
           limit113,
           100000
         )
+      t1$Lim_Inferior <- round(t1$Lim_Inferior, 0)
+      t1$Lim_Superior <- round(t1$Lim_Superior, 0)
+      
       t1 <- t1[, c(7, 8, 1, 4, 2 , 5, 3, 6)]
       
       for (i in 1:ncol(t1)) {
@@ -238,11 +254,12 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
       }
       rm(tabla_resumen)
       
-      t1 <- tibble::rownames_to_column(t1, "Medicion")
+      t1 <- tibble::rownames_to_column(t1, "Variable")
       class(t1$Porcent_Van) <- "percentage"
       class(t1$Porcent_Vbn) <- "percentage"
       class(t1$Porcent_Vcn) <- "percentage"
-      
+
+          
       setColWidths(wb,
                    meter,
                    cols = c(1:10),
@@ -257,30 +274,44 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
       )
       
       data_gather <- data[, c(1, 2, 12:20)]
+      colnames(data_gather) <-
+        c('Medicion',
+          'Cantidad Total',
+          '<87%',
+          '87% <=x< 91%',
+          '91% <=x< 93%',
+          '93% <=x< 95%',
+          '95% <=x< 105%',
+          '105% <=x< 107%',
+          '107% <=x< 109%',
+          '109% <=x< 113%',
+          '>= 113%'
+        )
+      
       data_gather <-
-        data_gather %>% gather("Variable", "Value", -c("Quantity", "cantidad"))
+        data_gather %>% gather("Variable", "Value", -c("Medicion", "Cantidad Total"))
+      
       data_gather$Variable <-
         factor(
           data_gather$Variable,
-          levels = c(
-            "TN087p",
-            "TN087_091p",
-            "TN091_093p",
-            "TN093_095p",
-            "TN095_105p",
-            "TN105_107p",
-            "TN107_109p",
-            "TN109_113p",
-            "TN113p"
+          levels = c('<87%',
+                     '87% <=x< 91%',
+                     '91% <=x< 93%',
+                     '93% <=x< 95%',
+                     '95% <=x< 105%',
+                     '105% <=x< 107%',
+                     '107% <=x< 109%',
+                     '109% <=x< 113%',
+                     '>= 113%'
           )
         )
-      
+
       p1 <-
         ggplot(data_gather,
                aes(
                  x = Variable,
                  y = Value,
-                 fill = Quantity,
+                 fill = Medicion,
                  label = Value
                )) +
         geom_col(position = "dodge", width = 0.7) +
@@ -301,7 +332,7 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
           size = 8
         )) +
         ggtitle(gsub("_", " ", meter)) +
-        xlab("Medicion") +
+        xlab("Variable") +
         ylab("Porcentaje")
       print(p1) #plot needs to be showing
       insertPlot(
@@ -319,7 +350,7 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
   ## nombre de archivo
   fileName <-
     paste0(
-      "C:/Data Science/ArhivosGenerados/Coopeguanacaste/Vfase_avg (",
+      "C:/Data Science/ArhivosGenerados/Coopeguanacaste/A_Tension de fase (",
       with_tz(initial_date, tzone = "America/Costa_Rica"),
       ") - (",
       with_tz(final_date, tzone = "America/Costa_Rica"),

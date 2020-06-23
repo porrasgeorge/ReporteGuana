@@ -47,9 +47,6 @@ Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   dataLog2$TimestampCR <- with_tz(dataLog2$TimestampUTC, tzone = "America/Costa_Rica") 
   dataLog2$TimestampUTC <- NULL
   dataLog2$ID <- NULL
-  dataLog2$year <- year(dataLog2$TimestampCR)
-  dataLog2$month <- month(dataLog2$TimestampCR)
-  
   
   
   ## Union de tablas, borrado de columnas no importantes y Categorizacion de valores

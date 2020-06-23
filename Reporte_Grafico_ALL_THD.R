@@ -125,6 +125,14 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
   ## Creacion del histograma
   wb <- createWorkbook()
   
+  titleStyle <- createStyle(
+    fontSize = 18, fontColour = "#FFFFFF", halign = "center",
+    fgFill = "#4F81BD", border = "TopBottom", borderColour = "#4F81BD")
+  
+  headerStyle <- createStyle(
+      fontSize = 12, halign = "center", textDecoration = "Bold")
+  
+  
   # Recorrer cada medidor
   for (meter in sources$Name) {
     ## meter <- "Casa_Chameleon"
@@ -151,11 +159,26 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
       
       colnames(data_HD) <- c("Variable", "Cantidad Total", "Cantidad <3%", "Cantidad >=3%", "Porc <3%", "Porc >=3%")
       colnames(data_THD) <- c("Variable", "Cantidad Total", "Cantidad <5%", "Cantidad >=5%", "Porc <5%", "Porc >=5%")
+      setColWidths(wb, meter, cols = c(1:10), widths = c(rep(15, 6)))
       
-      setColWidths(wb, meter, cols = c(1:10), widths = c(12, rep(15, 9)))
-      writeDataTable(wb, meter, x = data_THD, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1")
-      writeDataTable(wb, meter, x = data_HD, startRow = 20, rowNames = F, tableStyle = "TableStyleMedium1")
-
+      writeData(wb, meter, x = c("Distorsión Armónica Total"), startRow = 1)
+      mergeCells(wb, meter, cols = 1:6, rows = 1)
+      addStyle(wb, sheet = meter, titleStyle, rows = 1, cols = 1)
+      addStyle(wb, sheet = meter, headerStyle, rows = 2 , cols = 1:6)
+      writeDataTable(wb, meter, x = data_THD, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
+      
+      for (i in 2:20) {
+        data_row <- data_HD %>% filter(grepl(paste0("^V[123]_Harm", formatC(i, digits = 1, flag = "0"),"$"), Variable))
+        class(data_row$"Porc <3%") <- "percentage"
+        class(data_row$"Porc >=3%") <- "percentage"
+        
+        actual_row <- ((i-2)* 7) + 9
+        writeData(wb, meter, x = c(paste0(i, "° Componente de Distorsión Armónica ")), startRow = actual_row)
+        mergeCells(wb, meter, cols = 1:6, rows = actual_row)
+        addStyle(wb, sheet = meter, titleStyle, rows = actual_row, cols = 1)
+        addStyle(wb, sheet = meter, headerStyle, rows = actual_row +1 , cols = 1:6)
+        writeDataTable(wb, meter, x = data_row, startRow = actual_row +1 , rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
+      }
     }
   }
   

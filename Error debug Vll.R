@@ -137,3 +137,32 @@ p1
 
 
 
+wb <- createWorkbook()
+addWorksheet(wb, "Sheet 1")
+
+c1 <- createComment(comment = "this is comment")
+writeComment(wb, 1, col = "B", row = 10, comment = c1)
+
+s1 <- createStyle(fontSize = 12, fontColour = "red", textDecoration = c("BOLD"))
+s2 <- createStyle(fontSize = 9, fontColour = "black")
+
+c2 <- createComment(comment = c("This Part Bold red\n\n", "This part black"), style = c(s1, s2))
+c2
+
+writeComment(wb, 1, col = 6 , row = 3, comment = c2)
+writeData(wb, 1, x = c("Vanidad"), startRow = 5)
+mergeCells(wb, 1, cols = 1:6, rows = 1)
+
+saveWorkbook(wb, file = "writeCommentExample.xlsx", overwrite = TRUE)
+
+
+for (i in 2:20) {
+print(paste0("v", formatC(i, digits = 1, flag = "0")))
+}
+
+format(1:10, digits = 5)
+
+
+
+
+

@@ -1,12 +1,3 @@
-rm(list = ls())
-
-## Carga de Librerias
-library(dplyr)
-library(RODBC)
-library(lubridate)
-library(ggplot2)
-library(tidyr)
-library(openxlsx)
 
 VTHD_Report <- function(source_list, initial_dateCR, period_time) {
   
@@ -139,11 +130,11 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
     print(paste0("THD ", meter))
     
     # datos del medidor
-    data_THD <- datalog_THD %>% filter(Meter == meter)
-    data_HD <- datalog_HD %>% filter(Meter == meter)
+    data_THD_all <- datalog_THD %>% filter(Meter == meter)
+    data_HD_all <- datalog_HD %>% filter(Meter == meter)
     
-    data_THD <- as.data.frame(data_THD[,c(2:7)])
-    data_HD <- as.data.frame(data_HD[,c(2:7)])
+    data_THD <- as.data.frame(data_THD_all[,c(2:7)])
+    data_HD <- as.data.frame(data_HD_all[,c(2:7)])
     
     
     if (nrow(data_THD) > 0) {
@@ -167,17 +158,66 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
       addStyle(wb, sheet = meter, headerStyle, rows = 2 , cols = 1:6)
       writeDataTable(wb, meter, x = data_THD, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
       
+      plot_data <- dataLog %>% filter(Meter == meter, grepl("^V[123]_Harm_Total$", Quantity))
+      
+      plot_thd <- ggplot(data=plot_data, aes(x=TimestampCR, y=Value, group=Quantity)) +
+        ylim(0, NA) +
+        ggtitle("Distorsión Armónica Total") +
+        geom_step(aes(color=Quantity), direction = 'vh') +
+        geom_hline(yintercept=5, 
+                   linetype="dashed", 
+                   color = "chocolate1", 
+                   size=1.5)+ 
+        xlab("Fecha") +
+        ylab("Porcentaje (%)") 
+      
+      print(plot_thd) #plot needs to be showing
+      
+      insertPlot(
+        wb,
+        meter,
+        xy = c("A", 7),
+        width = 16,
+        height = 4,
+        fileType = "png",
+        units = "in"
+      )
+      
       for (i in 2:20) {
         data_row <- data_HD %>% filter(grepl(paste0("^V[123]_Harm", formatC(i, digits = 1, flag = "0"),"$"), Variable))
         class(data_row$"Porc <3%") <- "percentage"
         class(data_row$"Porc >=3%") <- "percentage"
         
-        actual_row <- ((i-2)* 7) + 9
-        writeData(wb, meter, x = c(paste0(i, "° Componente de Distorsión Armónica ")), startRow = actual_row)
+        actual_row <- ((i-2)* 30) + 35
+        writeData(wb, meter, x = c(paste0(i, ".° Componente de Distorsión Armónica ")), startRow = actual_row)
         mergeCells(wb, meter, cols = 1:6, rows = actual_row)
         addStyle(wb, sheet = meter, titleStyle, rows = actual_row, cols = 1)
         addStyle(wb, sheet = meter, headerStyle, rows = actual_row +1 , cols = 1:6)
         writeDataTable(wb, meter, x = data_row, startRow = actual_row +1 , rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
+        
+        plot_data <- dataLog %>% filter(Meter == meter, grepl(paste0("^V[123]_Harm", formatC(i, digits = 1, flag = "0"),"$"), Quantity))
+        
+        plot_thd <- ggplot(data=plot_data, aes(x=TimestampCR, y=Value, group=Quantity)) +
+          ylim(0, NA) +
+          ggtitle(paste0(i, ".° Componente de Distorsión Armónica ")) +
+          geom_step(aes(color=Quantity), direction = 'vh') +
+          geom_hline(yintercept=3, 
+                     linetype="dashed", 
+                     color = "chocolate1", 
+                     size=1.1) + 
+          xlab("Fecha") +
+          ylab("Porcentaje (%)") 
+        
+        print(plot_thd) #plot needs to be showing
+        insertPlot(
+          wb,
+          meter,
+          xy = c("A", actual_row + 7),
+          width = 16,
+          height = 3,
+          fileType = "png",
+          units = "in"
+        )
       }
     }
   }
@@ -194,23 +234,5 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
   saveWorkbook(wb, fileName, overwrite = TRUE)
   
 }
-
-
-#########################################################################################################
-## Lista de medidores
-source_list <- c(47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61)
-#########################################################################################################
-
-#########################################################################################################
-## Para reporte semanal
-initial_dateCR <- floor_date(now(), "week", week_start = 1) - weeks(1)
-period_time <- weeks(1)
-
-## Para reporte mensual
-# initial_dateCR <- floor_date(now(), "month", week_start = 1) - months(1)
-# period_time <- months(1)
-#########################################################################################################
-
-VTHD_Report(source_list, initial_dateCR, period_time)
 
 

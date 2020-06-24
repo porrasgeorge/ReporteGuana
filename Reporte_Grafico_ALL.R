@@ -1,4 +1,5 @@
 rm(list = ls())
+options(encoding = "UTF-8")
 
 ## Carga de Librerias
 library(dplyr)
@@ -12,6 +13,7 @@ source(file = "Reporte_Grafico_ALL_Vphase.R")
 source(file = "Reporte_Grafico_ALL_Vline.R")
 source(file = "Reporte_Grafico_ALL_Vunbal.R")
 source(file = "Reporte_Grafico_ALL_Iunbal.R")
+source(file = "Reporte_Grafico_ALL_VTHD.R")
 
 
 #########################################################################################################
@@ -33,4 +35,4 @@ Vphase_Report(source_list, initial_dateCR, period_time)
 Vline_Report(source_list, initial_dateCR, period_time)
 Vunbalance_Report(source_list, initial_dateCR, period_time)
 Iunbalance_Report(source_list, initial_dateCR, period_time)
-
+VTHD_Report(source_list, initial_dateCR, period_time)

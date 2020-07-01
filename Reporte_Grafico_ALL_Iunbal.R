@@ -72,6 +72,38 @@ Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   ## Creacion del histograma
   wb <- createWorkbook()
   
+  titleStyle <- createStyle(
+    fontSize = 18,
+    fontColour = "#FFFFFF",
+    halign = "center",
+    fgFill = "#4F81BD",
+    border = "TopBottom",
+    borderColour = "#4F81BD"
+  )
+  
+  redStyle <- createStyle(
+    fontSize = 14,
+    fontColour = "#FFFFFF",
+    fgFill = "#FF1111",
+    halign = "center",
+    textDecoration = "Bold",
+  )
+  
+  mainTableStyle <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    textDecoration = "Bold",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
+  mainTableStyle2 <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
   # Recorrer cada medidor
   for(meter in sources$Name){
     print(paste0("Iunbalance ", meter))
@@ -86,6 +118,53 @@ Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
       # Crear una hoja 
       addWorksheet(wb, meter)
       
+      head_table <- data.frame("c1" = c("Medidor", "Variable", "Cantidad de filas"),
+                               "c2" = c(gsub("_", " ", meter), 
+                                        "Desbalance de corriente",
+                                        sum(data$cantidad)))
+      
+      head_table2 <- data.frame("c1" = c("Fecha Inicial", "Fecha Final"),
+                                "c2" = c(format(initial_date, '%d/%m/%Y', tz = "America/Costa_Rica"),
+                                         format(final_date, '%d/%m/%Y', tz = "America/Costa_Rica")))
+      
+      mergeCells(wb, meter, cols = 2:3, rows = 1)
+      mergeCells(wb, meter, cols = 2:3, rows = 2)
+      mergeCells(wb, meter, cols = 2:3, rows = 3)
+      mergeCells(wb, meter, cols = 6:7, rows = 1)
+      mergeCells(wb, meter, cols = 6:7, rows = 2)
+      
+      writeData(
+        wb,
+        meter,
+        x = head_table,
+        startRow = 1,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      writeData(
+        wb,
+        meter,
+        x = head_table2,
+        startRow = 1,
+        startCol = 5,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:3, cols = 1)
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:2, cols = 5)
+      
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:3, cols = 2:3, gridExpand = T)
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:2, cols = 6:7, gridExpand = T)
+      
+      if(sum(data$cantidad) < 1008){
+        addStyle(wb, sheet = meter, redStyle, rows = 3, cols = 1:3)
+      }
+      
+      
       ## se agregan columnas con porcentuales
       data$LT_3p <- data$LT_3/data$cantidad
       data$GE_3 <- data$cantidad - data$LT_3
@@ -95,8 +174,8 @@ Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
       class(data$GE_3p) <- "percentage"     
       colnames(data) <- c("Medida", "Cantidad Total", "Cantidad <3%", "Porc <3%", "Cantidad >=3%", "Porc >3%"  )
 
-      setColWidths(wb, meter, cols = c(1:6), widths = c(12, rep(15, 5)))
-      writeDataTable(wb, meter, x = data, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1")
+      setColWidths(wb, meter, cols = c(1:6), widths = c(20, rep(15, 5)))
+      writeDataTable(wb, meter, x = data, startRow = 6, rowNames = F, tableStyle = "TableStyleMedium1")
       
       t1 <- as.data.frame(matrix(data = 0, nrow = 2, ncol = 5))
       colnames(t1) <- c("Quantity", "Type", "Total", "Value", "Perc_Value")
@@ -122,7 +201,8 @@ Iunbalance_Report <- function(source_list, initial_dateCR, period_time) {
         xlab("Distribucion") + 
         ylab("Porcentaje")
       print(p1) #plot needs to be showing
-      insertPlot(wb, meter, xy = c("A", 5), width = 8, height = 4, fileType = "png", units = "in")
+      
+      insertPlot(wb, meter, xy = c("A", 9), width = 8, height = 4, fileType = "png", units = "in")
     }
   }
   

@@ -123,8 +123,30 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
   headerStyle <- createStyle(
       fontSize = 12, halign = "center", textDecoration = "Bold")
   
+  redStyle <- createStyle(
+    fontSize = 14,
+    fontColour = "#FFFFFF",
+    fgFill = "#FF1111",
+    halign = "center",
+    textDecoration = "Bold",
+  )
   
-  # Recorrer cada medidor
+  mainTableStyle <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    textDecoration = "Bold",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
+  mainTableStyle2 <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
+    # Recorrer cada medidor
   for (meter in sources$Name) {
     ## meter <- "Casa_Chameleon"
     print(paste0("THD ", meter))
@@ -142,7 +164,53 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
       
       # Crear una hoja
       addWorksheet(wb, meter)
-
+      
+      head_table <- data.frame("c1" = c("Medidor", "Variable", "# de filas"),
+                               "c2" = c(gsub("_", " ", meter), 
+                                        "Distorsión Armónica",
+                                        sum(data_THD$cantidad)))
+      
+      head_table2 <- data.frame("c1" = c("Fecha Inicial", "Fecha Final"),
+                                "c2" = c(format(initial_date, '%d/%m/%Y', tz = "America/Costa_Rica"),
+                                         format(final_date, '%d/%m/%Y', tz = "America/Costa_Rica")))
+      
+      mergeCells(wb, meter, cols = 2:3, rows = 1)
+      mergeCells(wb, meter, cols = 2:3, rows = 2)
+      mergeCells(wb, meter, cols = 2:3, rows = 3)
+      mergeCells(wb, meter, cols = 6:7, rows = 1)
+      mergeCells(wb, meter, cols = 6:7, rows = 2)
+      
+      writeData(
+        wb,
+        meter,
+        x = head_table,
+        startRow = 1,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      writeData(
+        wb,
+        meter,
+        x = head_table2,
+        startRow = 1,
+        startCol = 5,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:3, cols = 1)
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:2, cols = 5)
+      
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:3, cols = 2:3, gridExpand = T)
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:2, cols = 6:7, gridExpand = T)
+      
+      if(sum(data_THD$cantidad) < 3024){
+        addStyle(wb, sheet = meter, redStyle, rows = 3, cols = 1:3)
+      }
+      
       class(data_HD$LT_3p) <- "percentage"
       class(data_HD$GE_3p) <- "percentage" 
       class(data_THD$LT_5p) <- "percentage"
@@ -152,11 +220,12 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
       colnames(data_THD) <- c("Variable", "Cantidad Total", "Cantidad <5%", "Cantidad >=5%", "Porc <5%", "Porc >=5%")
       setColWidths(wb, meter, cols = c(1:10), widths = c(rep(15, 6)))
       
-      writeData(wb, meter, x = c("Distorsión Armónica Total"), startRow = 1)
-      mergeCells(wb, meter, cols = 1:6, rows = 1)
-      addStyle(wb, sheet = meter, titleStyle, rows = 1, cols = 1)
-      addStyle(wb, sheet = meter, headerStyle, rows = 2 , cols = 1:6)
-      writeDataTable(wb, meter, x = data_THD, startRow = 2, rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
+      writeData(wb, meter, x = c("Distorsión Armónica Total"), startRow = 6)
+      mergeCells(wb, meter, cols = 1:6, rows = 6)
+      addStyle(wb, sheet = meter, titleStyle, rows = 6, cols = 1)
+      ##addStyle(wb, sheet = meter, headerStyle, rows = 6 , cols = 1:6)
+      
+      writeDataTable(wb, meter, x = data_THD, startRow = 7, rowNames = F, tableStyle = "TableStyleMedium1", withFilter = F)
       
       plot_data <- dataLog %>% filter(Meter == meter, grepl("^V[123]_Harm_Total$", Quantity))
       
@@ -176,7 +245,7 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
       insertPlot(
         wb,
         meter,
-        xy = c("A", 7),
+        xy = c("A", 12),
         width = 16,
         height = 4,
         fileType = "png",
@@ -188,7 +257,7 @@ VTHD_Report <- function(source_list, initial_dateCR, period_time) {
         class(data_row$"Porc <3%") <- "percentage"
         class(data_row$"Porc >=3%") <- "percentage"
         
-        actual_row <- ((i-2)* 30) + 35
+        actual_row <- ((i-2)* 26) + 35
         writeData(wb, meter, x = c(paste0(i, ".° Componente de Distorsión Armónica ")), startRow = actual_row)
         mergeCells(wb, meter, cols = 1:6, rows = actual_row)
         addStyle(wb, sheet = meter, titleStyle, rows = actual_row, cols = 1)

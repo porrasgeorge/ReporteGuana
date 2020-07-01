@@ -162,7 +162,13 @@ print(paste0("v", formatC(i, digits = 1, flag = "0")))
 
 format(1:10, digits = 5)
 
+x <- data.frame("SN" = 1:2, "Age" = c(21,15), "Name" = c("John","Dora"))
 
+head_table <- data.frame("c1" = c("Medidor", "Variable","Fecha Inicial", "Fecha Final"),
+                         "c2" = c("m1", "V1","f2", "f2"))
+
+
+format(initial_date, '%d/%m/%Y', tz = "America/Costa_Rica")
 
 
 

@@ -168,6 +168,38 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
   ## Creacion del histograma
   wb <- createWorkbook()
   
+  titleStyle <- createStyle(
+    fontSize = 18,
+    fontColour = "#FFFFFF",
+    halign = "center",
+    fgFill = "#4F81BD",
+    border = "TopBottom",
+    borderColour = "#4F81BD"
+  )
+  
+  redStyle <- createStyle(
+    fontSize = 14,
+    fontColour = "#FFFFFF",
+    fgFill = "#FF1111",
+    halign = "center",
+    textDecoration = "Bold",
+  )
+  
+  mainTableStyle <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    textDecoration = "Bold",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
+  mainTableStyle2 <- createStyle(
+    fontSize = 12,
+    halign = "center",
+    border = "TopBottomLeftRight",
+    borderColour = "#4F81BD"
+  )
+  
   # Recorrer cada medidor
   for (meter in sources$Name) {
     ## meter <- "Casa_Chameleon"
@@ -181,6 +213,52 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
       
       # Crear una hoja
       addWorksheet(wb, meter)
+      
+      head_table <- data.frame("c1" = c("Medidor", "Variable", "Cantidad de filas"),
+                               "c2" = c(gsub("_", " ", meter), 
+                                        "Tension de fase",
+                                        sum(data$cantidad)))
+      
+      head_table2 <- data.frame("c1" = c("Fecha Inicial", "Fecha Final"),
+                               "c2" = c(format(initial_date, '%d/%m/%Y', tz = "America/Costa_Rica"),
+                                        format(final_date, '%d/%m/%Y', tz = "America/Costa_Rica")))
+      
+      mergeCells(wb, meter, cols = 2:3, rows = 1)
+      mergeCells(wb, meter, cols = 2:3, rows = 2)
+      mergeCells(wb, meter, cols = 2:3, rows = 3)
+      mergeCells(wb, meter, cols = 6:7, rows = 1)
+      mergeCells(wb, meter, cols = 6:7, rows = 2)
+
+      writeData(
+        wb,
+        meter,
+        x = head_table,
+        startRow = 1,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      writeData(
+        wb,
+        meter,
+        x = head_table2,
+        startRow = 1,
+        startCol = 5,
+        rowNames = F,
+        colNames = F,
+        withFilter = F
+      )
+      
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:3, cols = 1)
+      addStyle(wb, sheet = meter, mainTableStyle, rows = 1:2, cols = 5)
+      
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:3, cols = 2:3, gridExpand = T)
+      addStyle(wb, sheet = meter, mainTableStyle2, rows = 1:2, cols = 6:7, gridExpand = T)
+      
+      if(sum(data$cantidad) < 3024){
+        addStyle(wb, sheet = meter, redStyle, rows = 3, cols = 1:3)
+      }
       
       ## se agregan columnas con porcentuales
       data$TN087p <- data$TN087 / data$cantidad
@@ -268,9 +346,10 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
         wb,
         meter,
         x = t1,
-        startRow = 2,
+        startRow = 6,
         rowNames = F,
-        tableStyle = "TableStyleMedium1"
+        tableStyle = "TableStyleMedium1",
+        withFilter = F
       )
       
       data_gather <- data[, c(1, 2, 12:20)]
@@ -338,7 +417,7 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
       insertPlot(
         wb,
         meter,
-        xy = c("A", 16),
+        xy = c("A", 17),
         width = 12,
         height = 6,
         fileType = "png",

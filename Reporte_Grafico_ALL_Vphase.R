@@ -1,4 +1,4 @@
-Vphase_Report <- function(source_list, initial_dateCR, period_time) {
+Vphase_Report <- function(initial_dateCR, period_time, sources) {
 
     ## Constantes
   # tension nomimal
@@ -14,24 +14,7 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
   
   ## Conexion a SQL Server
   channel <- odbcConnect("SQL_ION", uid = "R", pwd = "Con3$adm.")
-  
-  ## Carga de Tabla Source
-  sources <-
-    sqlQuery(
-      channel ,
-      "select top 100 ID, Name, DisplayName from Source where Name like 'Coopeguanacaste.%'"
-    )
-  sources$Name <- gsub("Coopeguanacaste.", '', sources$Name)
-  
-  ## Filtrado de Tabla Source
-  sources <- sources %>% filter(ID %in% source_list)
-  
-  #########################################################################################################
-  #############    Valores Promedios    ###################################################################
-  #########################################################################################################
-  
-  
-  ## NEW DATA
+
   #Carga de Tabla Quantity
   quantity <-
     sqlQuery(channel ,
@@ -92,24 +75,18 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
     with_tz(dataLog2$TimestampUTC, tzone = "America/Costa_Rica")
   dataLog2$TimestampUTC <- NULL
   dataLog2$ID <- NULL
-  dataLog2$year <- year(dataLog2$TimestampCR)
-  dataLog2$month <- month(dataLog2$TimestampCR)
-  
-  
-  
+
   ## Union de tablas, borrado de columnas no importantes y Categorizacion de valores
   dataLog <-
     dataLog2 %>% left_join(quantity, by = c('QuantityID' = "ID")) %>%
     left_join(sources, by = c('SourceID' = "ID"))
   #rm(dataLog2)
-  names(dataLog)[names(dataLog) == "Name.x"] <- "Quantity"
-  names(dataLog)[names(dataLog) == "Name.y"] <- "Meter"
+  names(dataLog)[names(dataLog) == "Name"] <- "Quantity"
+  ##names(dataLog)[names(dataLog) == "Name.y"] <- "Meter"
   dataLog$SourceID <- NULL
   dataLog$QuantityID <- NULL
   dataLog$DisplayName <- NULL
-  
-  ##dataLog_spread <- dataLog
-  
+
   dataLog$TN087 <- if_else(dataLog$Value <= limit087, TRUE, FALSE)
   dataLog$TN087_091 <-
     if_else((dataLog$Value > limit087) &
@@ -201,7 +178,7 @@ Vphase_Report <- function(source_list, initial_dateCR, period_time) {
   )
   
   # Recorrer cada medidor
-  for (meter in sources$Name) {
+  for (meter in sources$Meter) {
     ## meter <- "Casa_Chameleon"
     print(paste0("Vphase ", meter))
     

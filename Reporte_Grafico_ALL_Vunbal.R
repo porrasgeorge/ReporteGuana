@@ -1,4 +1,4 @@
-Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
+Vunbalance_Report <- function(initial_dateCR, period_time, sources) {
   
   ## Constantes
   # porcentaje nomimal
@@ -6,18 +6,7 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   
   ## Conexion a SQL Server
   channel <- odbcConnect("SQL_ION", uid="R", pwd="Con3$adm.")
-  
-  ## Carga de Tabla Source
-  sources <- sqlQuery(channel , "select top 100 ID, Name, DisplayName from Source where Name like 'Coopeguanacaste.%'")
-  sources$Name <- gsub("Coopeguanacaste.", '', sources$Name)
-  
-  ## Filtrado de Tabla Source
-  sources <- sources %>% filter(ID %in% source_list)
-  
-  #########################################################################################################
-  #############    Valores Promedios    ###################################################################
-  #########################################################################################################
-  
+
   #Carga de Tabla Quantity
   quantity <- sqlQuery(channel , "select top 1500000 ID, Name from Quantity where Name like 'V_unbalance%'")
   odbcCloseAll()
@@ -56,8 +45,7 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   dataLog <- dataLog2 %>% left_join(quantity, by = c('QuantityID' = "ID")) %>%
     left_join(sources, by = c('SourceID' = "ID"))
   #rm(dataLog2)
-  names(dataLog)[names(dataLog) == "Name.x"] <- "Quantity"
-  names(dataLog)[names(dataLog) == "Name.y"] <- "Meter"
+  names(dataLog)[names(dataLog) == "Name"] <- "Quantity"
   dataLog$SourceID <- NULL
   dataLog$QuantityID <- NULL
   dataLog$DisplayName <- NULL
@@ -109,7 +97,7 @@ Vunbalance_Report <- function(source_list, initial_dateCR, period_time) {
   
   
   # Recorrer cada medidor
-  for(meter in sources$Name){
+  for(meter in sources$Meter){
     print(paste0("Vunbalance ", meter))
     ## meter <- "Casa_Chameleon"
     

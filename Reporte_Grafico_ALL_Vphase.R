@@ -82,7 +82,6 @@ Vphase_Report <- function(initial_dateCR, period_time, sources) {
     left_join(sources, by = c('SourceID' = "ID"))
   #rm(dataLog2)
   names(dataLog)[names(dataLog) == "Name"] <- "Quantity"
-  ##names(dataLog)[names(dataLog) == "Name.y"] <- "Meter"
   dataLog$SourceID <- NULL
   dataLog$QuantityID <- NULL
   dataLog$DisplayName <- NULL
